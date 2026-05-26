@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>App PASCOM - Paróquia São José</title>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Roboto', sans-serif; }
+  body { background-color: #e0e0e0; display: flex; justify-content: center; min-height: 100vh; }
+  
+  /* Simulador de Tela Mobile */
+  #root { width: 100%; max-width: 480px; background: #fff; min-height: 100vh; position: relative; overflow-x: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.2); display: flex; flex-direction: column; }
+  
+  :root {
+    --pascom-green: #27a745;
+    --pascom-blue: #007bff;
+    --dark-bg: #333333;
+  }
+
+  /* Telas de Fundo (Usando imagens online para garantir que funcionam) */
+  .bg-home { background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1438032005730-c779502f22b8?auto=format&fit=crop&w=600&q=80') center/cover; background-color: #333; min-height: 100vh; display: flex; flex-direction: column; color: white; position: relative; }
+  .bg-login { background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1447014421976-7fec21d26d86?auto=format&fit=crop&w=600&q=80') center/cover; background-color: #333; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 30px; }
+
+  /* Inputs e Botões */
+  .title-main { font-size: 32px; font-weight: 500; text-align: center; margin-top: 10vh; line-height: 1.2; }
+  .input-box { width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; margin-bottom: 12px; color: #333; outline: none; background: #fff; }
+  .btn-primary { background-color: var(--pascom-blue); color: white; border: none; border-radius: 25px; padding: 14px 20px; font-size: 15px; font-weight: bold; cursor: pointer; text-transform: uppercase; width: 100%; transition: background 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-green { background-color: var(--pascom-green); }
+  .btn-dark { background-color: #333; }
+  .btn-danger { background-color: #dc3545; color: white; border: none; border-radius: 4px; padding: 6px 10px; cursor: pointer; font-weight: bold; }
+  .btn-edit { background-color: #007bff; color: white; border: none; border-radius: 4px; padding: 6px 10px; cursor: pointer; margin-right: 5px; font-weight: bold; }
+
+  /* FABs (Botões flutuantes) */
+  .fab-container { position: absolute; right: 15px; bottom: 80px; display: flex; flex-direction: column; gap: 12px; z-index: 10; }
+  .fab { width: 50px; height: 50px; border-radius: 50%; border: none; background-color: var(--pascom-green); color: white; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: transform 0.2s; }
+  .fab:active { transform: scale(0.9); }
+  .fab-blue { background-color: var(--pascom-blue); }
+  .fab-dark { background-color: #555; }
+  
+  /* Cabeçalhos e Tabelas */
+  .header-bar { background: #e0e0e0; padding: 15px 20px; display: flex; align-items: center; justify-content: center; position: relative; border-bottom: 1px solid #ccc; flex-shrink: 0; }
+  .header-bar h2 { font-size: 18px; color: #333; font-weight: 500; text-align: center; }
+  .back-btn { position: absolute; left: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #000; }
+  .table-container { background: #fff; flex: 1; padding: 10px; overflow-y: auto; }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th { border-bottom: 2px solid #ccc; padding: 10px; text-align: left; color: #333; font-size: 14px; }
+  td { padding: 12px 10px; border-bottom: 1px solid #eee; font-size: 14px; color: #444; }
+  tr:nth-child(even) { background-color: #f9f9f9; }
+  .expanded-row { background: #f4f4f4; padding: 15px; border-bottom: 1px solid #ddd; font-size: 13px; }
+  .expanded-row ul { list-style: none; margin-top: 5px; padding-left: 0; }
+  .expanded-row li { margin-bottom: 5px; color: #555; }
+  
+  /* Painel Admin Cards */
+  .admin-card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; border: 1px solid #ddd; }
+  .admin-card h3 { margin-bottom: 15px; color: #333; text-align: center; font-size: 18px; }
+
+  /* Container do Video Scanner */
+  .scanner-container { width: 100%; max-width: 300px; margin: 0 auto 15px auto; border-radius: 8px; overflow: hidden; border: 3px solid var(--pascom-green); display: none; }
+  .scanner-container.active { display: block; }
+
+  .footer { background-color: #b0bec5; padding: 15px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: #333; position: absolute; bottom: 0; width: 100%; z-index: 10; }
+  
+  /* Box do QR Code gerado na Home */
+  .qr-result { background: #fff; padding: 15px; border-radius: 10px; text-align: center; margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+  .qr-result img { max-width: 100%; height: auto; border-radius: 8px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const h = {
+  saveLS: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
+  loadLS: (k, def) => { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; },
+  fmtDate: (d) => {
+    if(!d) return "";
+    const [year, month, day] = d.split("-");
+    return `${day}/${month}`;
+  }
+};
+
+const CHAVE_MEMBROS = "pascom_membros_db_v3";
+
+const EVENTOS_DISPONIVEIS = [
+  "Transmissão ao vivo",
+  "Cobertura fotográfica"
+];
+
+function App() {
+  const [view, setView] = useState("home");
+  const [members, setMembers] = useState(() => h.loadLS(CHAVE_MEMBROS, []));
+
+  const saveMembers = (newData) => {
+    setMembers(newData);
+    h.saveLS(CHAVE_MEMBROS, newData);
+  };
+
+  if (view === "ranking") return <Ranking setView={setView} members={members} />;
+  if (view === "birthdays") return <Birthdays setView={setView} members={members} />;
+  if (view === "login") return <Login setView={setView} />;
+  if (view === "admin") return <AdminDashboard setView={setView} members={members} saveMembers={saveMembers} />;
+
+  return <Home setView={setView} />;
+}
+
+// ==========================================
+// 1. TELA INICIAL (COM GERADOR DE QR CODE)
+// ==========================================
+function Home({ setView }) {
+  const [userName, setUserName] = useState("");
+  const [showQR, setShowQR] = useState(false);
+
+  const handleGerarQR = () => {
+    if(userName.trim() === "") {
+      alert("Por favor, digite seu nome completo primeiro.");
+      return;
+    }
+    setShowQR(true);
+  };
+
+  return (
+    <div className="bg-home">
+      <div style={{ padding: "20px", zIndex: 1 }}>
+        <h1 className="title-main">
+          Check-in de<br/>Presença
+          <div style={{width: "40px", height: "3px", background: "var(--pascom-green)", margin: "10px auto"}}></div>
+        </h1>
+        
+        <div style={{ marginTop: "30px", background: "rgba(255,255,255,0.1)", padding: "20px", borderRadius: "10px", backdropFilter: "blur(5px)" }}>
+          <p style={{marginBottom: "10px", fontWeight: "bold", textAlign: "center"}}>Acesse sua credencial:</p>
+          <input 
+            type="text" 
+            className="input-box" 
+            placeholder="Digite seu Nome Completo..." 
+            value={userName} 
+            onChange={e => { setUserName(e.target.value); setShowQR(false); }}
+          />
+          <button className="btn-primary" onClick={handleGerarQR}>
+            <i className="fa-solid fa-qrcode"></i> Gerar Meu QR-Code
+          </button>
+
+          {showQR && (
+            <div className="qr-result fade-in">
+              <p style={{color: "#333", marginBottom: "10px", fontWeight: "bold", fontSize: "14px"}}>Seu QR Code de Acesso:</p>
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(userName)}&size=200x200&color=000000&bgcolor=ffffff`} alt="QR Code" />
+              <p style={{color: "#666", marginTop: "10px", fontSize: "12px"}}>Apresente este código ao coordenador para ler a presença.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="fab-container">
+        <button className="fab" onClick={() => setView("login")} title="Área do Coordenador">
+          <i className="fa-solid fa-user-shield"></i>
+        </button>
+        <button className="fab fab-blue" onClick={() => setView("ranking")} title="Ranking">
+          <i className="fa-solid fa-clipboard-list"></i>
+        </button>
+        <button className="fab" onClick={() => setView("birthdays")} title="Aniversariantes">
+          <i className="fa-solid fa-cake-candles"></i>
+        </button>
+        
+        <button className="fab fab-blue" onClick={() => window.open("https://instagram.com/pascom.sjst")} title="Instagram PASCOM">
+          <i className="fa-brands fa-instagram"></i>
+        </button>
+        
+        <button className="fab fab-dark" onClick={() => window.open("https://instagram.com/psaojosedosaltos")} title="Instagram Paróquia">
+          <i className="fa-solid fa-church"></i>
+        </button>
+      </div>
+
+      <div className="footer">
+        <span>© Copyright 2026 - PASCOM - PSJ</span>
+        <i className="fa-solid fa-bars" style={{fontSize: "20px", color: "var(--pascom-green)"}}></i>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// 2. TELA DE RANKING
+// ==========================================
+function Ranking({ setView, members }) {
+  const [expanded, setExpanded] = useState(null);
+  const rankingList = [...members].sort((a, b) => b.presences - a.presences);
+
+  return (
+    <div style={{display: "flex", flexDirection: "column", height: "100vh"}}>
+      <div className="header-bar">
+        <button className="back-btn" onClick={() => setView("home")}><i className="fa-solid fa-arrow-left"></i></button>
+        <h2><i className="fa-solid fa-crown" style={{color: "#ffd700"}}></i><br/>Ranking<br/>Frequência - 2026</h2>
+      </div>
+      
+      <div className="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th><i className="fa-solid fa-child-reaching"></i> Nome</th>
+              <th style={{textAlign:"center"}}><i className="fa-solid fa-users"></i> N° de Presenças</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rankingList.length === 0 && (
+              <tr><td colSpan="2" style={{textAlign:"center", padding: "30px"}}>Nenhum membro cadastrado.</td></tr>
+            )}
+            {rankingList.map(m => (
+              <React.Fragment key={m.id}>
+                <tr onClick={() => setExpanded(expanded === m.id ? null : m.id)} style={{cursor: "pointer"}}>
+                  <td>{m.name} <br/><span style={{fontSize:"11px", color:"var(--pascom-blue)"}}>{m.role}</span></td>
+                  <td style={{fontWeight: "bold", textAlign: "center"}}>{m.presences}</td>
+                </tr>
+                {expanded === m.id && (
+                  <tr>
+                    <td colSpan="2" style={{padding: 0, border: "none"}}>
+                      <div className="expanded-row">
+                        <p><strong>Instagram:</strong> <a href={`https://instagram.com/${m.insta.replace('@','')}`} style={{color: "var(--pascom-blue)", textDecoration: "none"}}>{m.insta}</a></p>
+                        <p style={{marginTop: "8px"}}><strong>Eventos Participados:</strong></p>
+                        <ul>
+                          {m.eventos && m.eventos.length > 0 
+                            ? m.eventos.map((ev, i) => <li key={i}>{i+1}. {ev}</li>)
+                            : <li>Nenhuma presença registrada.</li>
+                          }
+                        </ul>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// 3. TELA DE ANIVERSARIANTES
+// ==========================================
+function Birthdays({ setView, members }) {
+  const aniversariantes = members.filter(m => m.bday);
+  return (
+    <div style={{display: "flex", flexDirection: "column", height: "100vh"}}>
+      <div className="header-bar" style={{background: "linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)"}}>
+        <button className="back-btn" onClick={() => setView("home")}><i className="fa-solid fa-arrow-left"></i></button>
+        <div style={{display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", paddingLeft: "30px"}}>
+           <h2 style={{color: "#333", fontSize: "22px"}}>Aniversariantes</h2>
+           <div style={{width: "50px", height: "50px", background: "#fff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center"}}>
+             <i className="fa-solid fa-camera-retro" style={{color: "var(--pascom-green)", fontSize: "24px"}}></i>
+           </div>
+        </div>
+      </div>
+      
+      <div className="table-container" style={{padding: "0"}}>
+        <table>
+          <thead>
+            <tr style={{background: "#f0f0f0"}}>
+              <th><i className="fa-regular fa-calendar"></i> Dia/Mês</th>
+              <th><i className="fa-solid fa-child-reaching"></i> Nome</th>
+              <th><i className="fa-brands fa-instagram"></i> Instagram</th>
+            </tr>
+          </thead>
+          <tbody>
+            {aniversariantes.length === 0 && (
+              <tr><td colSpan="3" style={{textAlign:"center", padding: "30px"}}>Ninguém cadastrado com data de nascimento.</td></tr>
+            )}
+            {aniversariantes.map((m, i) => (
+              <tr key={i}>
+                <td style={{fontWeight: "bold"}}>{h.fmtDate(m.bday)}</td>
+                <td>{m.name}</td>
+                <td><span style={{color: "var(--pascom-blue)"}}>{m.insta}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// 4. TELA DE LOGIN DO ADMIN
+// ==========================================
+function Login({ setView }) {
+  const [email, setEmail] = useState("");
+  const [pass, setPass] = useState("");
+  const [error, setError] = useState("");
+
+  const handleLogin = () => {
+    if (email.trim().toLowerCase() === "antonioalvesdossantosneto7424@gmail.com" && pass === "antonio7424") {
+      setView("admin");
+    } else {
+      setError("Email ou senha incorretos.");
+    }
+  };
+
+  return (
+    <div className="bg-login">
+      <button style={{position: "absolute", top: "20px", left: "20px", background: "none", border: "none", color: "white", fontSize: "24px"}} onClick={() => setView("home")}>
+        <i className="fa-solid fa-arrow-left"></i>
+      </button>
+
+      <div style={{textAlign: "center", marginBottom: "40px"}}>
+        <h1 style={{color: "white", fontSize: "36px", fontWeight: "300"}}>
+          <i className="fa-solid fa-cross" style={{color: "var(--pascom-green)"}}></i> PASCOM PSJ <i className="fa-solid fa-cross" style={{color: "var(--pascom-green)"}}></i>
+        </h1>
+        <h2 style={{color: "white", fontSize: "28px", fontWeight: "300", marginTop: "10px"}}>Login Admin</h2>
+      </div>
+
+      <input 
+        type="email" 
+        className="input-box" 
+        placeholder="Email do Administrador" 
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+        style={{background: "var(--pascom-blue)", color: "white"}} 
+      />
+      
+      <div style={{position: "relative"}}>
+        <input 
+          type="password" 
+          className="input-box" 
+          placeholder="Senha" 
+          value={pass}
+          onChange={e => setPass(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleLogin()}
+          style={{background: "var(--pascom-blue)", color: "white"}} 
+        />
+      </div>
+
+      {error && <p style={{color: "#ffdddd", textAlign: "center", fontWeight: "bold", margin: "10px 0"}}>{error}</p>}
+
+      <button className="btn-primary btn-green" style={{marginTop: "20px"}} onClick={handleLogin}>
+        ENTRAR
+      </button>
+    </div>
+  );
+}
+
+// ==========================================
+// 5. PAINEL ADMIN (EDIÇÃO, CADASTRO, CÂMERA)
+// ==========================================
+function AdminDashboard({ setView, members, saveMembers }) {
+  const [nome, setNome] = useState("");
+  const [insta, setInsta] = useState("");
+  const [cargo, setCargo] = useState("Membro");
+  const [dataNasc, setDataNasc] = useState("");
+  const [editandoId, setEditandoId] = useState(null); 
+
+  const [membroSel, setMembroSel] = useState("");
+  const [eventoSel, setEventoSel] = useState(EVENTOS_DISPONIVEIS[0]);
+  const [dataEvento, setDataEvento] = useState(new Date().toISOString().split('T')[0]);
+
+  const [isScanning, setIsScanning] = useState(false);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const streamRef = useRef(null);
+
+  useEffect(() => {
+    return () => stopCamera();
+  }, []);
+
+  // Botão "Cadastrar" / "Salvar Edição"
+  const handleSalvarMembro = () => {
+    if(!nome.trim()) return alert("Digite o nome do membro!");
+    
+    if (editandoId) {
+      const updatedMembers = members.map(m => 
+        m.id === editandoId 
+          ? { ...m, name: nome, role: cargo, insta: insta || "-", bday: dataNasc } 
+          : m
+      );
+      saveMembers(updatedMembers);
+      alert("Dados atualizados com sucesso!");
+    } else {
+      const novoMembro = {
+        id: Date.now().toString(),
+        name: nome,
+        role: cargo,
+        insta: insta || "-",
+        bday: dataNasc,
+        presences: 0,
+        eventos: []
+      };
+      saveMembers([...members, novoMembro]);
+      alert("Cadastrado com sucesso!");
+    }
+    setNome(""); setInsta(""); setDataNasc(""); setCargo("Membro"); setEditandoId(null);
+  };
+
+  // Botão "Editar" (Joga os dados lá pra cima)
+  const handleEditar = (m) => {
+    setNome(m.name);
+    setInsta(m.insta === "-" ? "" : m.insta);
+    setDataNasc(m.bday);
+    setCargo(m.role);
+    setEditandoId(m.id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleExcluir = (id) => {
+    if(confirm("Apagar este membro definitivamente?")) {
+      saveMembers(members.filter(m => m.id !== id));
+      if(editandoId === id) { 
+        setNome(""); setInsta(""); setDataNasc(""); setCargo("Membro"); setEditandoId(null);
+      }
+    }
+  };
+
+  const registrarPresenca = (nomePesquisado) => {
+    const membroEncontrado = members.find(m => m.name.toLowerCase() === nomePesquisado.toLowerCase());
+    
+    if(!membroEncontrado) {
+      alert(`Erro: O nome "${nomePesquisado}" que estava no QR Code não foi encontrado nos cadastros.`);
+      return;
+    }
+    
+    const dtFormatoBr = h.fmtDate(dataEvento);
+    const registroEventoString = `${eventoSel} - ${dtFormatoBr}/2026`;
+
+    const updatedMembers = members.map(m => {
+      if (m.id === membroEncontrado.id) {
+        return {
+          ...m,
+          presences: m.presences + 1,
+          eventos: [registroEventoString, ...m.eventos]
+        };
+      }
+      return m;
+    });
+
+    saveMembers(updatedMembers);
+    alert(`✅ SUCESSO: Presença registrada para ${membroEncontrado.name}`);
+  };
+
+  const handleMarcarPresencaManual = () => {
+    if(!membroSel) return alert("Selecione um membro na lista abaixo!");
+    const membroObj = members.find(m => m.id === membroSel);
+    registrarPresenca(membroObj.name);
+    setMembroSel("");
+  };
+
+  // Funções da Câmera
+  const startCamera = async () => {
+    setIsScanning(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      streamRef.current = stream;
+      if(videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+        requestAnimationFrame(tick);
+      }
+    } catch (err) {
+      alert("Erro ao acessar a câmera. Verifique as permissões do navegador (precisa ser HTTPS ou localhost).");
+      setIsScanning(false);
+    }
+  };
+
+  const stopCamera = () => {
+    if(streamRef.current) streamRef.current.getTracks().forEach(track => track.stop());
+    setIsScanning(false);
+  };
+
+  const tick = () => {
+    if (!videoRef.current || videoRef.current.readyState !== videoRef.current.HAVE_ENOUGH_DATA) {
+      if (isScanning) requestAnimationFrame(tick);
+      return;
+    }
+
+    const canvas = canvasRef.current;
+    if(canvas) {
+      canvas.height = videoRef.current.videoHeight;
+      canvas.width = videoRef.current.videoWidth;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+      
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
+      
+      if (code && code.data) {
+        stopCamera(); 
+        registrarPresenca(code.data); 
+      } else {
+        if(isScanning) requestAnimationFrame(tick);
+      }
+    }
+  };
+
+  return (
+    <div style={{display: "flex", flexDirection: "column", height: "100vh", background: "#f8f9fa"}}>
+      <div className="header-bar" style={{background: "#e0e0e0"}}>
+        <button className="back-btn" onClick={() => setView("login")}><i className="fa-solid fa-arrow-left"></i></button>
+        <h2>Painel Admin<br/>PASCOM</h2>
+        <button onClick={() => setView("home")} style={{position: "absolute", right: "15px", background: "none", border: "1px solid #333", borderRadius: "50%", width: "35px", height: "35px", cursor: "pointer"}}>
+          <i className="fa-solid fa-arrow-right-from-bracket"></i>
+        </button>
+      </div>
+
+      <div style={{padding: "20px", flex: 1, overflowY: "auto"}}>
+        
+        {/* CARD 1: CADASTRAR OU EDITAR PESSOA */}
+        <div className="admin-card" style={{borderTop: editandoId ? "4px solid var(--pascom-blue)" : "1px solid #ddd"}}>
+          <h3>
+            {editandoId ? <i className="fa-solid fa-pen-to-square"></i> : <i className="fa-solid fa-user-plus"></i>} 
+            {editandoId ? " Editando Pessoa" : " Cadastrar Nova Pessoa"}
+          </h3>
+          
+          <input type="text" className="input-box" placeholder="Nome Completo" value={nome} onChange={e => setNome(e.target.value)} />
+          <input type="text" className="input-box" placeholder="Instagram (Ex: @joao)" value={insta} onChange={e => setInsta(e.target.value)} />
+          
+          <label style={{fontSize: "12px", color:"#666", fontWeight:"bold"}}>Data de Nascimento</label>
+          <input type="date" className="input-box" value={dataNasc} onChange={e => setDataNasc(e.target.value)} />
+          
+          <label style={{fontSize: "12px", color:"#666", fontWeight:"bold"}}>Cargo</label>
+          <select className="input-box" value={cargo} onChange={e => setCargo(e.target.value)}>
+            <option value="Membro">Membro</option>
+            <option value="Coordenador">Coordenador</option>
+          </select>
+          
+          <div style={{display: "flex", gap: "10px"}}>
+            <button className={`btn-primary ${editandoId ? "btn-blue" : "btn-green"}`} style={{borderRadius: "8px", flex: 1}} onClick={handleSalvarMembro}>
+              {editandoId ? "Gravar Alterações" : "+ Cadastrar Pessoa"}
+            </button>
+            {editandoId && (
+               <button className="btn-primary btn-danger" style={{borderRadius: "8px", flex: 0.5}} onClick={() => {
+                 setEditandoId(null); setNome(""); setInsta(""); setDataNasc(""); setCargo("Membro");
+               }}>Cancelar Edição</button>
+            )}
+          </div>
+        </div>
+
+        {/* CARD 2: LER QR CODE E REGISTRAR PRESENÇA */}
+        <div className="admin-card">
+          <h3><i className="fa-solid fa-camera"></i> Ler QR Code / Frequência</h3>
+          
+          <label style={{fontSize: "12px", color:"#666", fontWeight:"bold"}}>O Evento de Hoje é:</label>
+          <select className="input-box" value={eventoSel} onChange={e => setEventoSel(e.target.value)}>
+            {EVENTOS_DISPONIVEIS.map(ev => (
+              <option key={ev} value={ev}>{ev}</option>
+            ))}
+          </select>
+
+          <label style={{fontSize: "12px", color:"#666", fontWeight:"bold"}}>Data do Evento</label>
+          <input type="date" className="input-box" value={dataEvento} onChange={e => setDataEvento(e.target.value)} />
+
+          <hr style={{margin: "15px 0", borderTop: "1px solid #eee"}} />
+
+          {/* Área do Scanner */}
+          <div className={`scanner-container ${isScanning ? 'active' : ''}`}>
+             <video ref={videoRef} style={{width: "100%", display: "block"}} playsInline></video>
+             <canvas ref={canvasRef} style={{display: "none"}}></canvas>
+          </div>
+
+          {!isScanning ? (
+            <button className="btn-primary btn-dark" style={{borderRadius: "8px", marginBottom: "15px"}} onClick={startCamera}>
+              <i className="fa-solid fa-qrcode"></i> Ligar Câmera (Ler QR Code)
+            </button>
+          ) : (
+            <button className="btn-primary btn-danger" style={{borderRadius: "8px", marginBottom: "15px"}} onClick={stopCamera}>
+              <i className="fa-solid fa-stop"></i> Parar Câmera
+            </button>
+          )}
+
+          <p style={{textAlign:"center", fontSize:"12px", color:"#666", marginBottom:"10px"}}>Se não conseguir ler a tela do celular, registre manualmente abaixo:</p>
+
+          <div style={{display: "flex", gap: "10px"}}>
+            <select className="input-box" style={{marginBottom: 0}} value={membroSel} onChange={e => setMembroSel(e.target.value)}>
+              <option value="">Buscar na lista...</option>
+              {members.map(m => (
+                <option key={m.id} value={m.id}>{m.name}</option>
+              ))}
+            </select>
+            <button className="btn-primary" style={{borderRadius: "8px", width: "auto", padding: "0 15px"}} onClick={handleMarcarPresencaManual}>
+              Marcar Manual
+            </button>
+          </div>
+        </div>
+
+        {/* CARD 3: LISTA RÁPIDA DE MEMBROS (Botões de Editar e Excluir) */}
+        <div className="admin-card">
+          <h3>Editar Pessoas Cadastradas ({members.length})</h3>
+          {members.length === 0 ? <p style={{textAlign:"center", fontSize:"13px"}}>Nenhum membro cadastrado.</p> : null}
+          {members.map(m => (
+            <div key={m.id} style={{display:"flex", justifyContent:"space-between", alignItems:"center", borderBottom:"1px solid #eee", padding:"10px 0"}}>
+              <div>
+                <strong style={{fontSize:"14px"}}>{m.name}</strong><br/>
+                <span style={{fontSize:"11px", color:"#888"}}>{m.role} • {m.presences} presenças</span>
+              </div>
+              <div style={{display: "flex", flexWrap: "nowrap"}}>
+                <button className="btn-edit" onClick={() => handleEditar(m)} title="Editar os dados desta pessoa">
+                  <i className="fa-solid fa-pen"></i> Editar
+                </button>
+                <button className="btn-danger" onClick={() => handleExcluir(m.id)} title="Excluir Membro">
+                  <i className="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>
