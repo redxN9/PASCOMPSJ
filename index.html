@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>App PASCOM - Paróquia São José</title>
+
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  font-family:'Roboto',sans-serif;
+}
+
+body{
+  background:#e0e0e0;
+  display:flex;
+  justify-content:center;
+  min-height:100vh;
+}
+
+#root{
+  width:100%;
+  max-width:480px;
+  background:#fff;
+  min-height:100vh;
+  position:relative;
+  overflow-x:hidden;
+  box-shadow:0 0 20px rgba(0,0,0,0.2);
+  display:flex;
+  flex-direction:column;
+}
+
+:root{
+  --pascom-green:#27a745;
+  --pascom-blue:#007bff;
+}
+
+/* FUNDO */
+.bg-home{
+  background:
+  linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.8)),
+  url('https://images.unsplash.com/photo-1438032005730-c779502f22b8?auto=format&fit=crop&w=600&q=80')
+  center/cover;
+
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  color:white;
+  position:relative;
+}
+
+.bg-login{
+  background:
+  linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)),
+  url('https://images.unsplash.com/photo-1447014421976-7fec21d26d86?auto=format&fit=crop&w=600&q=80')
+  center/cover;
+
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:30px;
+}
+
+/* TITULOS */
+.title-main{
+  font-size:32px;
+  font-weight:500;
+  text-align:center;
+  margin-top:10vh;
+  line-height:1.2;
+}
+
+/* INPUTS */
+.input-box{
+  width:100%;
+  padding:14px;
+  border:1px solid #ccc;
+  border-radius:8px;
+  font-size:15px;
+  margin-bottom:12px;
+  color:#333;
+  outline:none;
+  background:#fff;
+}
+
+/* SELECT SOMBREADO */
+select.input-box{
+  background:#f1f3f5;
+  color:#555;
+  border:1px solid #ccc;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.08);
+  appearance:none;
+}
+
+select.input-box:focus{
+  background:#fff;
+  border-color:var(--pascom-blue);
+  box-shadow:0 0 5px rgba(0,123,255,0.4);
+}
+
+/* BOTÕES */
+.btn-primary{
+  background-color:var(--pascom-blue);
+  color:white;
+  border:none;
+  border-radius:25px;
+  padding:14px 20px;
+  font-size:15px;
+  font-weight:bold;
+  cursor:pointer;
+  text-transform:uppercase;
+  width:100%;
+}
+
+.btn-green{
+  background-color:var(--pascom-green);
+}
+
+.btn-dark{
+  background-color:#333;
+}
+
+/* MENU FLUTUANTE */
+.fab-container{
+  position:absolute;
+  right:15px;
+  bottom:80px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  z-index:10;
+  align-items:flex-end;
+}
+
+.fab{
+  width:50px;
+  height:50px;
+  border-radius:50%;
+  border:none;
+  background-color:var(--pascom-green);
+  color:white;
+  font-size:20px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  box-shadow:0 4px 10px rgba(0,0,0,0.3);
+}
+
+.fab-blue{
+  background-color:var(--pascom-blue);
+}
+
+.fab-dark{
+  background-color:#555;
+}
+
+/* HEADER */
+.header-bar{
+  background:#e0e0e0;
+  padding:15px 20px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  border-bottom:1px solid #ccc;
+}
+
+.header-bar h2{
+  font-size:18px;
+  color:#333;
+  font-weight:500;
+  text-align:center;
+}
+
+.back-btn{
+  position:absolute;
+  left:15px;
+  background:none;
+  border:none;
+  font-size:20px;
+  cursor:pointer;
+}
+
+/* TABELAS */
+.table-container{
+  background:#fff;
+  flex:1;
+  padding:10px;
+  overflow-y:auto;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+th{
+  border-bottom:2px solid #ccc;
+  padding:10px;
+  text-align:left;
+}
+
+td{
+  padding:12px 10px;
+  border-bottom:1px solid #eee;
+}
+
+/* ADMIN */
+.admin-card{
+  background:#fff;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 2px 10px rgba(0,0,0,0.1);
+  margin-bottom:20px;
+}
+
+.admin-card h3{
+  margin-bottom:15px;
+  text-align:center;
+}
+
+/* FOOTER */
+.footer{
+  background-color:#b0bec5;
+  padding:15px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:14px;
+  color:#333;
+  position:absolute;
+  bottom:0;
+  width:100%;
+}
+
+/* QR */
+.qr-result{
+  background:#fff;
+  padding:15px;
+  border-radius:10px;
+  text-align:center;
+  margin-top:20px;
+}
+
+.qr-result img{
+  max-width:100%;
+}
+</style>
+</head>
+
+<body>
+
+<div id="root"></div>
+
+<script type="text/babel">
+
+const { useState } = React;
+
+const h = {
+  saveLS:(k,v)=>localStorage.setItem(k, JSON.stringify(v)),
+  loadLS:(k,d)=>{
+    const v = localStorage.getItem(k);
+    return v ? JSON.parse(v) : d;
+  }
+};
+
+const CHAVE_MEMBROS = "pascom_db";
+
+const EVENTOS_DISPONIVEIS = [
+  "Transmissão ao vivo",
+  "Cobertura fotográfica"
+];
+
+function App(){
+
+  const [view,setView] = useState("home");
+
+  const [members,setMembers] = useState(
+    ()=>h.loadLS(CHAVE_MEMBROS,[])
+  );
+
+  const saveMembers=(data)=>{
+    setMembers(data);
+    h.saveLS(CHAVE_MEMBROS,data);
+  };
+
+  if(view==="login"){
+    return <Login setView={setView}/>
+  }
+
+  if(view==="admin"){
+    return (
+      <AdminDashboard
+        setView={setView}
+        members={members}
+        saveMembers={saveMembers}
+      />
+    )
+  }
+
+  return <Home setView={setView}/>
+}
+
+/* HOME */
+
+function Home({ setView }) {
+
+  const [userName, setUserName] = useState("");
+  const [showQR, setShowQR] = useState(false);
+
+  /* MENU */
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const handleGerarQR = () => {
+
+    if(userName.trim() === ""){
+      alert("Digite seu nome.");
+      return;
+    }
+
+    setShowQR(true);
+  };
+
+  return (
+    <div className="bg-home">
+
+      <div style={{ padding:"20px" }}>
+
+        <h1 className="title-main">
+          Check-in de<br/>Presença
+
+          <div style={{
+            width:"40px",
+            height:"3px",
+            background:"var(--pascom-green)",
+            margin:"10px auto"
+          }}></div>
+        </h1>
+
+        <div style={{
+          marginTop:"30px",
+          background:"rgba(255,255,255,0.1)",
+          padding:"20px",
+          borderRadius:"10px",
+          backdropFilter:"blur(5px)"
+        }}>
+
+          <p style={{
+            marginBottom:"10px",
+            fontWeight:"bold",
+            textAlign:"center"
+          }}>
+            Acesse sua credencial:
+          </p>
+
+          <input
+            type="text"
+            className="input-box"
+            placeholder="Digite seu Nome Completo..."
+            value={userName}
+            onChange={(e)=>{
+              setUserName(e.target.value);
+              setShowQR(false);
+            }}
+          />
+
+          <button
+            className="btn-primary"
+            onClick={handleGerarQR}
+          >
+            <i className="fa-solid fa-qrcode"></i>
+            {" "}Gerar Meu QR-Code
+          </button>
+
+          {showQR && (
+            <div className="qr-result">
+
+              <p style={{
+                color:"#333",
+                marginBottom:"10px",
+                fontWeight:"bold"
+              }}>
+                Seu QR Code de Acesso:
+              </p>
+
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(userName)}&size=200x200`}
+              />
+
+            </div>
+          )}
+
+        </div>
+
+      </div>
+
+      {/* MENU NOVO */}
+      <div className="fab-container">
+
+        {menuOpen && (
+          <>
+            <button
+              className="fab"
+              onClick={() => setView("login")}
+            >
+              <i className="fa-solid fa-user-shield"></i>
+            </button>
+
+            <button
+              className="fab fab-blue"
+            >
+              <i className="fa-solid fa-clipboard-list"></i>
+            </button>
+
+            <button
+              className="fab"
+            >
+              <i className="fa-solid fa-cake-candles"></i>
+            </button>
+
+            <button
+              className="fab fab-blue"
+              onClick={() => window.open("https://instagram.com/pascom.sjst")}
+            >
+              <i className="fa-brands fa-instagram"></i>
+            </button>
+
+            <button
+              className="fab fab-dark"
+              onClick={() => window.open("https://instagram.com/psaojosedosaltos")}
+            >
+              <i className="fa-solid fa-church"></i>
+            </button>
+          </>
+        )}
+
+        {/* BOTÃO 3 PONTOS */}
+        <button
+          className="fab fab-dark"
+          onClick={() => setMenuOpen(!menuOpen)}
+        >
+          <i className={`fa-solid ${menuOpen ? "fa-xmark" : "fa-ellipsis-vertical"}`}></i>
+        </button>
+
+      </div>
+
+      <div className="footer">
+        <span>© Copyright 2026 - PASCOM - PSJ</span>
+
+        <i
+          className="fa-solid fa-bars"
+          style={{
+            fontSize:"20px",
+            color:"var(--pascom-green)"
+          }}
+        ></i>
+      </div>
+
+    </div>
+  );
+}
+
+/* LOGIN */
+
+function Login({ setView }){
+
+  const [email,setEmail] = useState("");
+  const [pass,setPass] = useState("");
+
+  const handleLogin=()=>{
+
+    if(
+      email === "antonioalvesdossantosneto7424@gmail.com" &&
+      pass === "antonio7424"
+    ){
+      setView("admin");
+    }else{
+      alert("Email ou senha incorretos.");
+    }
+  };
+
+  return(
+    <div className="bg-login">
+
+      <button
+        style={{
+          position:"absolute",
+          top:"20px",
+          left:"20px",
+          background:"none",
+          border:"none",
+          color:"white",
+          fontSize:"24px"
+        }}
+        onClick={() => setView("home")}
+      >
+        <i className="fa-solid fa-arrow-left"></i>
+      </button>
+
+      <div style={{
+        textAlign:"center",
+        marginBottom:"40px"
+      }}>
+        <h1 style={{
+          color:"white",
+          fontSize:"36px"
+        }}>
+          PASCOM PSJ
+        </h1>
+      </div>
+
+      <input
+        type="email"
+        className="input-box"
+        placeholder="Email"
+        value={email}
+        onChange={e=>setEmail(e.target.value)}
+      />
+
+      <input
+        type="password"
+        className="input-box"
+        placeholder="Senha"
+        value={pass}
+        onChange={e=>setPass(e.target.value)}
+      />
+
+      <button
+        className="btn-primary btn-green"
+        onClick={handleLogin}
+      >
+        Entrar
+      </button>
+
+    </div>
+  )
+}
+
+/* ADMIN */
+
+function AdminDashboard({ setView, members, saveMembers }) {
+
+  const [nome, setNome] = useState("");
+  const [cargo, setCargo] = useState("");
+  const [eventoSel, setEventoSel] = useState("");
+
+  const cadastrar = () => {
+
+    if(!nome || !cargo){
+      alert("Preencha tudo");
+      return;
+    }
+
+    const novo = {
+      id: Date.now().toString(),
+      name: nome,
+      role: cargo
+    };
+
+    saveMembers([...members, novo]);
+
+    setNome("");
+    setCargo("");
+
+    alert("Cadastrado!");
+  };
+
+  return (
+    <div style={{
+      display:"flex",
+      flexDirection:"column",
+      height:"100vh",
+      background:"#f8f9fa"
+    }}>
+
+      <div className="header-bar">
+
+        <button
+          className="back-btn"
+          onClick={() => setView("home")}
+        >
+          <i className="fa-solid fa-arrow-left"></i>
+        </button>
+
+        <h2>Painel Admin</h2>
+
+      </div>
+
+      <div style={{
+        padding:"20px",
+        overflowY:"auto"
+      }}>
+
+        <div className="admin-card">
+
+          <h3>Cadastrar Pessoa</h3>
+
+          <input
+            type="text"
+            className="input-box"
+            placeholder="Nome Completo"
+            value={nome}
+            onChange={e=>setNome(e.target.value)}
+          />
+
+          {/* CARGO SOMBREADO */}
+          <select
+            className="input-box"
+            value={cargo}
+            onChange={e => setCargo(e.target.value)}
+          >
+
+            <option value="" disabled>
+              Selecione o cargo
+            </option>
+
+            <option value="Membro">
+              Membro
+            </option>
+
+            <option value="Coordenador">
+              Coordenador
+            </option>
+
+          </select>
+
+          <button
+            className="btn-primary btn-green"
+            onClick={cadastrar}
+          >
+            Cadastrar Pessoa
+          </button>
+
+        </div>
+
+        <div className="admin-card">
+
+          <h3>Evento de Hoje</h3>
+
+          {/* EVENTO SOMBREADO */}
+          <select
+            className="input-box"
+            value={eventoSel}
+            onChange={e => setEventoSel(e.target.value)}
+          >
+
+            <option value="" disabled>
+              Selecione o evento
+            </option>
+
+            {EVENTOS_DISPONIVEIS.map(ev => (
+              <option key={ev} value={ev}>
+                {ev}
+              </option>
+            ))}
+
+          </select>
+
+        </div>
+
+      </div>
+
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(
+  document.getElementById('root')
+);
+
+root.render(<App />);
+
+</script>
+
+</body>
+</html>
